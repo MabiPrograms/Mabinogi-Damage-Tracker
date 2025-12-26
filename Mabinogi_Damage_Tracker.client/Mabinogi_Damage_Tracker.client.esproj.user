@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_live|AnyCPU'">
+    <DebuggerFlavor>LaunchJsonDebugger</DebuggerFlavor>
+    <LaunchJsonTarget>{
+  "name": "localhost (Chrome)",
+  "type": "chrome",
+  "request": "launch",
+  "url": "https://localhost:3000",
+  "webRoot": "C:\\Checkout\\git\\public\\Mabinogi-Damage-Tracker\\Mabinogi_Damage_Tracker.client"
+}</LaunchJsonTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebuggerFlavor>LaunchJsonDebugger</DebuggerFlavor>
+    <LaunchJsonTarget>{
+  "name": "localhost (Chrome)",
+  "type": "chrome",
+  "request": "launch",
+  "url": "https://localhost:3000",
+  "webRoot": "C:\\Checkout\\git\\public\\Mabinogi-Damage-Tracker\\Mabinogi_Damage_Tracker.client"
+}</LaunchJsonTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_file|AnyCPU'">
+    <DebuggerFlavor>LaunchJsonDebugger</DebuggerFlavor>
+    <LaunchJsonTarget>{
+  "name": "localhost (Chrome)",
+  "type": "chrome",
+  "request": "launch",
+  "url": "https://localhost:5004",
+  "webRoot": "C:\\Checkout\\git\\Mabinogi_Damage_Tracker\\Mabinogi_Damage_Tracker.client"
+}</LaunchJsonTarget>
+  </PropertyGroup>
+</Project>
