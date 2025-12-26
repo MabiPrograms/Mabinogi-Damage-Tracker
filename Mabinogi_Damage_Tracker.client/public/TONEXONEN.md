@@ -1,0 +1,6 @@
+﻿We've open sourced this project's code base so you can review the functionality of the project, and hopefully publicly approve the scope and methods in which this code base works. Most notably that this application is a read-only parser. We do not modify, manipulate, emulate, or in any other way touch data that interfaces with Mabinogi's operations.
+The code you are interested in is inside the “Parser.cs” Class.  
+
+The developers of this project, some of which wish to remain anonymous, are passionate players of Mabinogi. We have created this application to enhance the player experience in Mabinogi and bring it in line with many modern MMO RPGs in functionality. We feel that this also aligns with the developers' and director's intentions in Mabinogi as well; streamlining and consistently enhancing the player experience. In our closed beta testing, every player that interacted with the application was ecstatic about the insight the application created.
+
+From our perspective, this application only benefits Mabinogi. We would be greatly appreciative if whomever is responsible for putting the “Stamp of Approval" on this project at Nexon would do so.

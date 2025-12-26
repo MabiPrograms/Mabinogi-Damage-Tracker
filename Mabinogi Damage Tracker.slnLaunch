@@ -1,0 +1,16 @@
+[
+  {
+    "Name": "Main Launch Profile",
+    "Projects": [
+      {
+        "Path": "Mabinogi_Damage_Tracker.Server\\Mabinogi_Damage_Tracker.Server.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Mabinogi_Damage_Tracker.client\\Mabinogi_Damage_Tracker.client.esproj",
+        "Action": "Start",
+        "DebugTarget": "localhost (Chrome)"
+      }
+    ]
+  }
+]
