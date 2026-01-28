@@ -50,7 +50,7 @@ export default function MenuContent() {
             <ListItem key={index} disablePadding sx={{ display: 'block' }} >
                 <ListItemButton onClick={() => {
                     if (item.text === "Feedback") {
-                        window.open('https://github.com/KilloPillers/Mabinogi_Damage_Tracker/issues')
+                        window.open('https://github.com/MabiPrograms/Mabinogi-Damage-Tracker/issues')
                     }
                     else {
                         setMenu({ name: item.text })
