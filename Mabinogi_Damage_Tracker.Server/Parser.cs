@@ -643,7 +643,11 @@ namespace Mabinogi_Damage_tracker
 
                 string playername = Encoding.UTF8.GetString(packet.PayloadData, cursor, (int)namelength - 1);
 
-                if (Regex.IsMatch(playername, @"[^a-zA-Z0-9+]")) { return; }
+                if (string.IsNullOrWhiteSpace(playername)) { return; }
+                playername = playername.Trim();
+                if (playername.Any(char.IsControl)) { return; }
+
+                if (playername.Length >= 3 && playername.StartsWith("<") && playername.EndsWith(">")) { return; }
 
                 //character_names.Add(new Name(playername, playerid));
                 db_helper.add_player(playername, (Int64)playerid);
