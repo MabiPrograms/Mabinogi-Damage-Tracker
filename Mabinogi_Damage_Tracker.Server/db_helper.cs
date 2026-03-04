@@ -821,6 +821,10 @@ namespace Mabinogi_Damage_tracker
                             if (reader.HasRows == false) { return null; }
                             while (reader.Read())
                             {
+                                if(reader.IsDBNull(0) || reader.IsDBNull(1) || reader.IsDBNull(2) || reader.IsDBNull(3))
+                                {
+                                    continue;
+                                }
                                 results = new Damage_Simple(reader.GetDouble(0), reader.GetInt64(3), reader.GetString(1), reader.GetInt32(2));
                                 damages.Add(results);
                             }

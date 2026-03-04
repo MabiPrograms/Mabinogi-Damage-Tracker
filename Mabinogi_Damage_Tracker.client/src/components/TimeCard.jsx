@@ -23,7 +23,7 @@ export default function TimeCard({ length_ut }) {
     
 
     return (
-        <Paper square={false} sx={{ 'padding-left': "32px", 'padding-top': "10px", gap: "20px", height: "100%", display: 'flex', flexDirection: 'column'}}>
+        <Paper square={false} sx={{ padding: "32px", gap: "20px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <AccessTimeIcon fontSize="large" sx={{ marginBottom: "5%"}} />
             <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 } }}>
                 <Box sx={{ gap: "0px", flexGrow: "1" }}>

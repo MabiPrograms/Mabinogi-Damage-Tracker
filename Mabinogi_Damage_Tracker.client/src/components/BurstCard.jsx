@@ -41,9 +41,9 @@ export default function BurstCard({ bands, graphBands, setGraphBands }) {
     }, [activeStep, cardLabel, bands, setGraphBands])
 
     return (
-        <Paper square={false} sx={{ 'padding-left': "32px",'padding-top': "10px", gap: "0px", height: "90%", display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <AutoAwesomeIcon fontSize="large" />
-            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 }, height:'80px' }}>
+        <Paper square={false} sx={{ position: 'relative', "padding-left": "32px","padding-top":"20px", gap: "10px", height: "100%", display: 'flex', flexDirection: 'column'}}>
+            <AutoAwesomeIcon fontSize="medium" />
+            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 }}}>
                 <Box sx={{ gap: "5px", flexGrow: "2"}} >
                     <Typography variant="subtitle1">Largest {currentBurst.label} burst</Typography>
                     <Typography variant="h3">{currentBurst.player_name}</Typography>
@@ -51,7 +51,7 @@ export default function BurstCard({ bands, graphBands, setGraphBands }) {
                     <Typography variant="subtitle1">Started at {currentBurst.start}</Typography>
                 </Box>
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }} >
+            <Box sx={{ position: 'absolute', bottom: 25 , left: '50%', transform: "translate(-50%, 50%)" }} >
                 <DotsMobileStepper steps={bands.length} activeStep={activeStep} setActiveStep={setActiveStep}/>
             </Box>
         </Paper>

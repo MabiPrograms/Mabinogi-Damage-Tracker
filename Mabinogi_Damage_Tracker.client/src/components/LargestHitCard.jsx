@@ -36,15 +36,15 @@ export default function LargestHitCard({ largestDamageInstances, setGraphLargest
     }, [activeStep, largestDamageInstances, setGraphLargestDamageInstance])
 
     return (
-        <Paper square={false} sx={{ 'padding-left': "32px",'padding-top':"10px", gap: "10px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <StarIcon fontSize="large" sx={{ marginBottom: "8%" }} />
-            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 } }}>
+        <Paper square={false} sx={{ position: 'relative', "padding-left": "32px", "padding-top": "20px", gap: "10px", height: "100%", display: 'flex', flexDirection: 'column' }}>
+            <StarIcon fontSize="medium" sx={{ marginBottom: "8%" }} />
+            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 }}}>
                 <Box sx={{ gap: "10px", flexGrow: "2" }}>
                     <Typography variant="subtitle1">Largest Hit by {currentlargestDamageInstance.player_name}</Typography>
                     <Typography variant="h3">{formatLargeNumber(currentlargestDamageInstance.damage)}</Typography>
                 </Box>
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }} >
+            <Box sx={{ position: 'absolute', bottom: 25, left: '50%', transform: "translate(-50%, 50%)" }} >
                 <DotsMobileStepper steps={largestDamageInstances.length} activeStep={activeStep} setActiveStep={setActiveStep} />
             </Box>
         </Paper>

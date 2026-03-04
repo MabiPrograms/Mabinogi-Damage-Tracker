@@ -4,6 +4,7 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Skeleton from '@mui/material/Skeleton';
+import Divider from '@mui/material/Divider';
 import DamageCard from './DamageCard';
 import PlayerCountCard from './PlayerCountCard';
 import TimeCard from './TimeCard';
@@ -208,7 +209,7 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
             <Typography variant="h2" sx={{ marginBottom: "8px"}}>Analytics</Typography>
             <Grid container spacing={{ xs: 1, md: 2 }} alignItems="stretch" sx={{ flexGrow: 1 }}>
                 { /* Total Damage Card */}
-                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '220px' }} >
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} >
                     {combinedDamageOverTimeData ?
                         <DamageCard chartData={combinedDamageOverTimeData} totalDamage={totalDamage} />
                         :
@@ -216,7 +217,7 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                     }
                 </Grid>
                 { /* Number of Players Card */}
-                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '220px' }}>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} >
                     {numberOfPlayer ?
                         <PlayerCountCard count={numberOfPlayer} />
                         :
@@ -224,34 +225,35 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                     }
                 </Grid> 
                 { /* Time Card */}
-                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '220px' }}>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} >
                     <TimeCard length_ut={end_ut - start_ut} />
                 </Grid>
-                { /* Largest Damage Instance Card */}
-                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '220px' }}>
-                    {largestDamageInstances.length ?
-                        <LargestHitCard largestDamageInstances={largestDamageInstances} setGraphLargestDamageInstance={setGraphLargestDamageInstance} />
-                    :
-                        <Skeleton variant="rounded" />
-                    }
-                </Grid>
-                { /* Largets Burst Cards */ }
-                {bands.length ? 
-                    bands.map((band, index) =>
-                        <Grid key={`band_${index}`} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '250px' }}>
-                            <BurstCard bands={band} graphBands={graphBands} setGraphBands={setGraphBands} />
-                        </Grid>
-                    )
-                    : Array.from(2).map((_) => <Skeleton variant="rounded" />)
-                }
                 { /* Total Healing Card */}
-                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ }}>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} >
                     {combinedDamageOverTimeData ?
                         <HealingCard totalHealing={totalHealing} />
                         :
                         <Skeleton variant="rounded" />
                     }
                 </Grid>
+                { /* Largest Damage Instance Card */}
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '250px', paddingBottom: '14px' }}>
+                    {largestDamageInstances.length ?
+                        <LargestHitCard largestDamageInstances={largestDamageInstances} setGraphLargestDamageInstance={setGraphLargestDamageInstance} />
+                        :
+                        <Skeleton variant="rounded" />
+                    }
+                </Grid>
+                { /* Largets Burst Cards */ }
+                {bands.length ? 
+                    bands.map((band, index) =>
+                        <Grid key={`band_${index}`} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '250px', paddingBottom: '14px' }}>
+                            <BurstCard bands={band} graphBands={graphBands} setGraphBands={setGraphBands} />
+                        </Grid>
+                    )
+                    : Array.from(2).map((_) => <Skeleton variant="rounded" />)
+                }
+
                 { /* Player Damange Pie Chart */}
                 <Grid size={{ xs: 12, sm: 12, lg: 8, xl: 4 }} >
                     <PlayerDamagePieChart chartData={damagePieChartData} />

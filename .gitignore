@@ -1,2 +1,10 @@
 /Mabinogi_Damage_Tracker.Server/obj
 /.vs
+/Mabinogi_Damage_Tracker.client/build
+/Mabinogi_Damage_Tracker.client/node_modules
+/Mabinogi_Damage_Tracker.client/obj
+/Mabinogi_Damage_Tracker.Server/bin
+*.db
+*.pcapng
+*.pcapng
+Mabinogi_Damage_Tracker.Server/out.pcapng

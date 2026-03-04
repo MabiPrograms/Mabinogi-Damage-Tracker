@@ -9,7 +9,7 @@ import PersonIcon from '@mui/icons-material/Person';
 export default function PlayerCountCard({ count }) {
 
     return (
-        <Paper square={false} sx={{ 'padding-left': "32px", 'padding-top': "10px", gap: "20px", height: "100%", display: 'flex', flexDirection: 'column'}}>
+        <Paper square={false} sx={{ padding: "32px", gap: "20px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <GroupIcon fontSize="large" sx={{ marginBottom: "8%" }} />
             <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 } }}>
                 <Box sx={{ gap: "10px", flexGrow: "2" }}>

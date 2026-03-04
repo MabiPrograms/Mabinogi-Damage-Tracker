@@ -18,7 +18,7 @@ export default function DotsMobileStepper({ steps, activeStep, setActiveStep }) 
             steps={steps}
             position="static"
             activeStep={activeStep}
-            sx={{ maxWidth: 400, flexGrow: 1, background: theme.palette.background.paper, }}
+            sx={{ maxWidth: 400, flexGrow: 1, background: theme.palette.background.paper, borderRadius: 2 }}
             nextButton={
                 <Button size="small" onClick={handleNext} disabled={activeStep === steps - 1} color="cardAccent">
                     Next
