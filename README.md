@@ -80,7 +80,8 @@ You can now check your recipient/tracker PC and you should see no internet conne
 
 ## Run the server
 
-Download the compiled server from the releases page and move that onto a local directory on your pc. Run the MabinogiDamageTracker.server.exe and you should be up and running. If a console (command prompt) does not show up or something opens and closes really quicky use the command prompt to run the application and see what error you receive.  
+Download the compiled server from the releases page and move that onto a local SSD or M.2 directory running off your PC.
+Run the MabinogiDamageTracker.server.exe and you should be up and running. If a console (command prompt) does not show up or something opens and closes really quicky use the command prompt to run the application and see what error you receive.  
 EX:  
 cd C:/MabinogiDamageTracker  
 MabinogiDamageTracker.Server.exe  
@@ -96,6 +97,10 @@ We monitor healing, general chat, and damage. Check the live page for a live log
 ## We are an open source project and appreciate any contributions to the project!
 We are actively developing the user experience and adding front end features. Check back with the repo occasionally and see if any new updates are out.
 
+
+# Troubleshooting:
+## I have inaccurate data
+Make sure the app is being ran off a solid state drive (sata SSD or M.2) if the app is ran off a hard drive (HDD or spinning disk)
 
 
 # Recognitions:
