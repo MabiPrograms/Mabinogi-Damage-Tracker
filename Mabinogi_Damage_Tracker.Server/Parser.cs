@@ -103,7 +103,7 @@ namespace Mabinogi_Damage_tracker
             static LibPcapLiveDevice device = null;
         #endif
         #if DEBUG_FILE
-            static CaptureFileReaderDevice device = new CaptureFileReaderDevice("C:/packets/full glenn vhm run.pcapng");
+            static CaptureFileReaderDevice device = new CaptureFileReaderDevice("C:/packets/debug.pcapng");
         #endif
         static Thread reader;
 

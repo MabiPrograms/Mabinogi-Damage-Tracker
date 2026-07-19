@@ -5,6 +5,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <ActiveDebugProfile>http</ActiveDebugProfile>
-    <NameOfLastUsedPublishProfile>C:\Checkout\git\Mabinogi_Damage_Tracker\Mabinogi_Damage_Tracker.Server\Properties\PublishProfiles\FolderProfile.pubxml</NameOfLastUsedPublishProfile>
+    <NameOfLastUsedPublishProfile>FolderProfile</NameOfLastUsedPublishProfile>
   </PropertyGroup>
 </Project>
