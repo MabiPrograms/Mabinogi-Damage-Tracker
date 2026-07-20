@@ -8,3 +8,5 @@
 *.pcapng
 *.pcapng
 Mabinogi_Damage_Tracker.Server/out.pcapng
+Mabinogi_Damage_Tracker.Server/out.pcapng
+*.pcapng
