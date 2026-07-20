@@ -720,7 +720,7 @@ namespace Mabinogi_Damage_tracker
                         }
 
                         //check if we have a marrionette dealing damage and find the owner's id
-                        if (attacker_id == 0 && damage > 0)
+                        if ((attacker_id == 0 || attacker_id > 0x0010010000000001) && damage > 0 && cursor + 50 <= subsub_pack_start_cursor + subsubPackLen)
                         {
                             cursor += 42;
                             attacker_id = BinaryPrimitives.ReadUInt64BigEndian(payloadData.Slice(cursor));
