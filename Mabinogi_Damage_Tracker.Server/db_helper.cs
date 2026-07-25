@@ -1,16 +1,29 @@
-using System.Diagnostics;
-using System.Text.Json;
-using System.Xml.Linq;
 using Mabinogi_Damage_tracker.Models;
 using Mabinogi_Damage_Tracker;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.Sqlite;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.Json;
+using System.Xml.Linq;
 
 namespace Mabinogi_Damage_tracker
 {
     public class db_helper
     {
         private static string db_connection = @"Data Source=trackerdb.db;";
+        private static readonly ConcurrentQueue<DamageHitRecord> _damageQueue = new ConcurrentQueue<DamageHitRecord>();
+        private static readonly System.Timers.Timer FlushTimer;
+        public record DamageHitRecord(Int64 PlayerId, double Damage, double Wound, int ManaDamage, Int64 EnemyId, int Skill, int Subskill, long ActionpackId, long CombatActionId, long Options);
+        static db_helper()
+        {
+            FlushTimer = new System.Timers.Timer(5000);
+            FlushTimer.Elapsed += (sender, e) => FlushDamageQueue();
+            FlushTimer.AutoReset = true;
+            FlushTimer.Start();
+        }
+
+
 
         public static void Initalize_db()
         {
@@ -66,6 +79,9 @@ namespace Mabinogi_Damage_tracker
                         adapter TEXT
                     )";
 
+                //enable WAL to improve preformance on slow drives
+                sqliteCommand.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
+                sqliteCommand.ExecuteNonQuery();
 
                 sqliteCommand.CommandText = create_playerid;
                 sqliteCommand.ExecuteNonQuery();
@@ -169,31 +185,80 @@ namespace Mabinogi_Damage_tracker
 
         public static void add_damage(Int64 playerid, double damage, double wound, int manadamage, Int64 enemyid, int skill, int subskill, long actionpackid, long combatactionid, long options)
         {
+            _damageQueue.Enqueue(new DamageHitRecord(playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options));
+        
+        }
+
+
+        private static void FlushDamageQueue()
+        {
+            if (_damageQueue.IsEmpty) return;
+
+            var batch = new List<DamageHitRecord>();
+            while (_damageQueue.TryDequeue(out var hit))
+            {
+                batch.Add(hit);
+            }
+
+            if (batch.Count == 0) return;
+
             try
             {
                 using (SqliteConnection connection = new SqliteConnection(db_connection))
                 {
                     connection.Open();
-                    SqliteCommand add_command = new SqliteCommand(@"
+
+                    // Begin an explicit transaction! This is the magic that fixes the HDD lag.
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        using (var command = new SqliteCommand(@"
                     INSERT INTO damages (playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options, dt, ut)
-                        VALUES(@id,@dmg,@wound,@manadamage,@enemyid,@skill,@subskill,@actionpackid,@combatactionid,@options,datetime(), unixepoch())
-                    ", connection);
-                    add_command.Parameters.AddWithValue("@id", playerid);
-                    add_command.Parameters.AddWithValue("@dmg", damage);
-                    add_command.Parameters.AddWithValue("@wound", wound);
-                    add_command.Parameters.AddWithValue("@manadamage", manadamage);
-                    add_command.Parameters.AddWithValue("@enemyid", enemyid);
-                    add_command.Parameters.AddWithValue("@skill", skill);
-                    add_command.Parameters.AddWithValue("@subskill", subskill);
-                    add_command.Parameters.AddWithValue("@actionpackid", actionpackid);
-                    add_command.Parameters.AddWithValue("@combatactionid", combatactionid);
-                    add_command.Parameters.AddWithValue("@options", options);
-                    add_command.ExecuteNonQueryAsync();
+                    VALUES(@id, @dmg, @wound, @manadamage, @enemyid, @skill, @subskill, @actionpackid, @combatactionid, @options, datetime(), unixepoch())
+                ", connection, transaction))
+                        {
+                            // Create parameters once to save CPU cycles
+                            command.Parameters.Add("@id", SqliteType.Integer);
+                            command.Parameters.Add("@dmg", SqliteType.Real);
+                            command.Parameters.Add("@wound", SqliteType.Real);
+                            command.Parameters.Add("@manadamage", SqliteType.Integer);
+                            command.Parameters.Add("@enemyid", SqliteType.Integer);
+                            command.Parameters.Add("@skill", SqliteType.Integer);
+                            command.Parameters.Add("@subskill", SqliteType.Integer);
+                            command.Parameters.Add("@actionpackid", SqliteType.Integer);
+                            command.Parameters.Add("@combatactionid", SqliteType.Integer);
+                            command.Parameters.Add("@options", SqliteType.Integer);
+
+                            // Loop through the batch, updating parameter values and executing
+                            foreach (var hit in batch)
+                            {
+                                command.Parameters["@id"].Value = hit.PlayerId;
+                                command.Parameters["@dmg"].Value = hit.Damage;
+                                command.Parameters["@wound"].Value = hit.Wound;
+                                command.Parameters["@manadamage"].Value = hit.ManaDamage;
+                                command.Parameters["@enemyid"].Value = hit.EnemyId;
+                                command.Parameters["@skill"].Value = hit.Skill;
+                                command.Parameters["@subskill"].Value = hit.Subskill;
+                                command.Parameters["@actionpackid"].Value = hit.ActionpackId;
+                                command.Parameters["@combatactionid"].Value = hit.CombatActionId;
+                                command.Parameters["@options"].Value = hit.Options;
+
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        // Commit the entire batch to the hard drive at once
+                        transaction.Commit();
+                    }
                 }
+                Debug.WriteLine($"[DB] Flushed {batch.Count} damage records to disk.");
             }
-            catch 
+            catch (Exception ex)
             {
-                Debug.WriteLine("couldnt send sql command");
+                Debug.WriteLine($"[DB] Failed to flush batch: {ex.Message}");
+                // Optional: Re-queue the batch so data isn't lost on transient errors
+                foreach (var hit in batch)
+                {
+                    _damageQueue.Enqueue(hit);
+                }
             }
         }
 
