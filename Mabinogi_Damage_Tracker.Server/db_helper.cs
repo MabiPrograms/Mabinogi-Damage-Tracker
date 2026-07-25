@@ -13,11 +13,12 @@ namespace Mabinogi_Damage_tracker
     {
         private static string db_connection = @"Data Source=trackerdb.db;";
         private static readonly ConcurrentQueue<DamageHitRecord> _damageQueue = new ConcurrentQueue<DamageHitRecord>();
-        public record HealRecord(ulong Healer, ulong Recipient, uint HealAmount);
-        private static readonly ConcurrentQueue<HealRecord> _healQueue = new ConcurrentQueue<HealRecord>();
+        public record DamageHitRecord(Int64 PlayerId, double Damage, double Wound, int ManaDamage, Int64 EnemyId, int Skill, int Subskill, long ActionpackId, long CombatActionId, long Options, long ut);
 
+        public record HealRecord(ulong Healer, ulong Recipient, uint HealAmount, long ut);
+        private static readonly ConcurrentQueue<HealRecord> _healQueue = new ConcurrentQueue<HealRecord>();
         private static readonly System.Timers.Timer FlushTimer;
-        public record DamageHitRecord(Int64 PlayerId, double Damage, double Wound, int ManaDamage, Int64 EnemyId, int Skill, int Subskill, long ActionpackId, long CombatActionId, long Options);
+        
         static db_helper()
         {
             FlushTimer = new System.Timers.Timer(5000);
@@ -87,8 +88,8 @@ namespace Mabinogi_Damage_tracker
                     )";
 
                 //enable WAL to improve preformance on slow drives
-                sqliteCommand.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
-                sqliteCommand.ExecuteNonQuery();
+                //sqliteCommand.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
+                //sqliteCommand.ExecuteNonQuery();
 
                 sqliteCommand.CommandText = create_playerid;
                 sqliteCommand.ExecuteNonQuery();
@@ -192,7 +193,7 @@ namespace Mabinogi_Damage_tracker
 
         public static void add_damage(Int64 playerid, double damage, double wound, int manadamage, Int64 enemyid, int skill, int subskill, long actionpackid, long combatactionid, long options)
         {
-            _damageQueue.Enqueue(new DamageHitRecord(playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options));
+            _damageQueue.Enqueue(new DamageHitRecord(playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options, DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
         
         }
 
@@ -215,15 +216,14 @@ namespace Mabinogi_Damage_tracker
                 {
                     connection.Open();
 
-                    // Begin an explicit transaction! This is the magic that fixes the HDD lag.
                     using (var transaction = connection.BeginTransaction())
                     {
                         using (var command = new SqliteCommand(@"
-                    INSERT INTO damages (playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options, dt, ut)
-                    VALUES(@id, @dmg, @wound, @manadamage, @enemyid, @skill, @subskill, @actionpackid, @combatactionid, @options, datetime(), unixepoch())
-                ", connection, transaction))
+                            INSERT INTO damages (playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options, dt, ut)
+                            VALUES(@id, @dmg, @wound, @manadamage, @enemyid, @skill, @subskill, @actionpackid, @combatactionid, @options, datetime(), @ut)
+                            ", connection, transaction))
                         {
-                            // Create parameters once to save CPU cycles
+
                             command.Parameters.Add("@id", SqliteType.Integer);
                             command.Parameters.Add("@dmg", SqliteType.Real);
                             command.Parameters.Add("@wound", SqliteType.Real);
@@ -234,8 +234,8 @@ namespace Mabinogi_Damage_tracker
                             command.Parameters.Add("@actionpackid", SqliteType.Integer);
                             command.Parameters.Add("@combatactionid", SqliteType.Integer);
                             command.Parameters.Add("@options", SqliteType.Integer);
+                            command.Parameters.Add("@ut", SqliteType.Integer);
 
-                            // Loop through the batch, updating parameter values and executing
                             foreach (var hit in batch)
                             {
                                 command.Parameters["@id"].Value = hit.PlayerId;
@@ -248,11 +248,10 @@ namespace Mabinogi_Damage_tracker
                                 command.Parameters["@actionpackid"].Value = hit.ActionpackId;
                                 command.Parameters["@combatactionid"].Value = hit.CombatActionId;
                                 command.Parameters["@options"].Value = hit.Options;
-
+                                command.Parameters["@ut"].Value = hit.ut;
                                 command.ExecuteNonQuery();
                             }
                         }
-                        // Commit the entire batch to the hard drive at once
                         transaction.Commit();
                     }
                 }
@@ -343,7 +342,7 @@ namespace Mabinogi_Damage_tracker
 
         public static void add_heal (UInt64 healer, UInt64 recipient, UInt32 heal)
         {
-            _healQueue.Enqueue(new HealRecord(healer, recipient, heal));
+            _healQueue.Enqueue(new HealRecord(healer, recipient, heal, DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
         }
 
         public static void FlushHealQueue()
@@ -367,19 +366,19 @@ namespace Mabinogi_Damage_tracker
                     {
                         using (var command = new SqliteCommand(@"
                     INSERT INTO heals (healer, heal, recipient, dt, ut)
-                    VALUES(@healer, @heal, @rec, datetime(), unixepoch())
+                    VALUES(@healer, @heal, @rec, datetime(), @ut)
                 ", connection, transaction))
                         {
                             command.Parameters.Add("@healer", SqliteType.Integer);
                             command.Parameters.Add("@heal", SqliteType.Integer);
                             command.Parameters.Add("@rec", SqliteType.Integer);
-
+                            command.Parameters.Add("@ut", SqliteType.Integer);
                             foreach (var item in batch)
                             {
                                 command.Parameters["@healer"].Value = item.Healer;
                                 command.Parameters["@heal"].Value = item.HealAmount;
                                 command.Parameters["@rec"].Value = item.Recipient;
-
+                                command.Parameters["@ut"].Value = item.ut;
                                 command.ExecuteNonQuery();
                             }
                         }

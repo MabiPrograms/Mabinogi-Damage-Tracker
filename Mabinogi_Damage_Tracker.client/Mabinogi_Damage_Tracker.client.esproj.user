@@ -26,8 +26,8 @@
   "name": "localhost (Chrome)",
   "type": "chrome",
   "request": "launch",
-  "url": "https://localhost:5004",
-  "webRoot": "C:\\Checkout\\git\\Mabinogi_Damage_Tracker\\Mabinogi_Damage_Tracker.client"
+  "url": "https://localhost:3000",
+  "webRoot": "C:\\Checkout\\git\\Mabinogi-Damage-Tracker\\Mabinogi_Damage_Tracker.client"
 }</LaunchJsonTarget>
   </PropertyGroup>
 </Project>
