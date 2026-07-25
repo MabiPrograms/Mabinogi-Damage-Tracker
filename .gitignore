@@ -12,3 +12,4 @@ Mabinogi_Damage_Tracker.Server/out.pcapng
 *.pcapng
 Mabinogi_Damage_Tracker.Server/out.pcapng
 Mabinogi_Damage_Tracker.client/src/localization/i18n/skills/en.json.bak
+Mabinogi_Damage_Tracker.Server/trackerdb.db-shm

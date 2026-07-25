@@ -34,6 +34,11 @@ namespace Mabinogi_Damage_tracker
         private const int MaxRecentParentHits = 512;
         private const int MaxRecentProcSignatures = 512;
 
+#if DEBUG_FILE
+        private static DateTime? _firstPacketTime = null;
+        private static Stopwatch _realTimeClock = new Stopwatch();
+#endif
+
         private sealed class RecentDamageHit
         {
             public UInt64 AttackerId { get; init; }
@@ -102,12 +107,12 @@ namespace Mabinogi_Damage_tracker
         static Dictionary<TcpStreamKey, TcpStreamState> tcpStreams = new Dictionary<TcpStreamKey, TcpStreamState>();
 
         public static bool pause = false;
-        #if DEBUG_LIVE || RELEASE
+#if DEBUG_LIVE || RELEASE
             static LibPcapLiveDevice device = null;
-        #endif
-        #if DEBUG_FILE
-            static CaptureFileReaderDevice device = new CaptureFileReaderDevice("C:/packets/debug.pcapng");
-        #endif
+#endif
+#if DEBUG_FILE
+        static CaptureFileReaderDevice device = new CaptureFileReaderDevice("C:/packets/debug.pcapng");
+#endif
         static Thread reader;
 
         public static bool Stop()
@@ -220,12 +225,33 @@ namespace Mabinogi_Damage_tracker
 
         private static void Device_OnPacketArrival(object s, PacketCapture e)
         {
+
             if (pause == true)
             {
                 return;
             }
 
             RawCapture raw = e.GetPacket();
+
+#if DEBUG_FILE
+            var packetTime = e.GetPacket().Timeval.Date;
+
+            if (_firstPacketTime == null)
+            {
+                _firstPacketTime = packetTime;
+                _realTimeClock.Start();
+            }
+            else
+            {
+                TimeSpan expectedTimePassed = packetTime - _firstPacketTime.Value;
+                TimeSpan timeToWait = expectedTimePassed - _realTimeClock.Elapsed;
+
+                if (timeToWait > TimeSpan.Zero)
+                {
+                    Thread.Sleep(timeToWait);
+                }
+            }
+#endif
 
             if (savenextpacket)
             {
@@ -641,7 +667,7 @@ namespace Mabinogi_Damage_tracker
                 streamState.LastActionpackId = actionpack_id;
                 UInt32 combatActionID = 0;
                 string throwawaypacket = "";
-                
+
 
                 var damages = new List<(UInt64 EnemyId, double Damage, double Wound, UInt32 ManaDamage, UInt32 Options, UInt64 attacker_id)>();
 
@@ -657,7 +683,7 @@ namespace Mabinogi_Damage_tracker
                     combatActionID = BinaryPrimitives.ReadUInt32BigEndian(payloadData.Slice(cursor));
                     cursor += sizeof(UInt32);
                     _ = combatActionID;
-                    
+
 
                     cursor++;
                     UInt64 entityID = BinaryPrimitives.ReadUInt64BigEndian(payloadData.Slice(cursor));
@@ -936,7 +962,7 @@ namespace Mabinogi_Damage_tracker
                 if (playername.Any(char.IsControl)) { return; }
 
                 if (playername.Length >= 3 && playername.StartsWith("<") && playername.EndsWith(">")) { return; }
-                
+
                 //character_names.Add(new Name(playername, playerid));
                 db_helper.add_player(playername, (Int64)playerid);
                 LogsController.WriteLog("[PLAYER DISCOVERED]" + playerid.ToString() + " -> " + playername);
