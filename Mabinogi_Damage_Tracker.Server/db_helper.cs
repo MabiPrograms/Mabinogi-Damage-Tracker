@@ -13,12 +13,19 @@ namespace Mabinogi_Damage_tracker
     {
         private static string db_connection = @"Data Source=trackerdb.db;";
         private static readonly ConcurrentQueue<DamageHitRecord> _damageQueue = new ConcurrentQueue<DamageHitRecord>();
+        public record HealRecord(ulong Healer, ulong Recipient, uint HealAmount);
+        private static readonly ConcurrentQueue<HealRecord> _healQueue = new ConcurrentQueue<HealRecord>();
+
         private static readonly System.Timers.Timer FlushTimer;
         public record DamageHitRecord(Int64 PlayerId, double Damage, double Wound, int ManaDamage, Int64 EnemyId, int Skill, int Subskill, long ActionpackId, long CombatActionId, long Options);
         static db_helper()
         {
             FlushTimer = new System.Timers.Timer(5000);
-            FlushTimer.Elapsed += (sender, e) => FlushDamageQueue();
+            FlushTimer.Elapsed += (sender, e) =>
+            {
+                FlushDamageQueue();
+                FlushHealQueue();
+            };
             FlushTimer.AutoReset = true;
             FlushTimer.Start();
         }
@@ -336,24 +343,58 @@ namespace Mabinogi_Damage_tracker
 
         public static void add_heal (UInt64 healer, UInt64 recipient, UInt32 heal)
         {
+            _healQueue.Enqueue(new HealRecord(healer, recipient, heal));
+        }
+
+        public static void FlushHealQueue()
+        {
+            if (_healQueue.IsEmpty) return;
+
+            var batch = new List<HealRecord>();
+            while (_healQueue.TryDequeue(out var record))
+            {
+                batch.Add(record);
+            }
+
+            if (batch.Count == 0) return;
+
             try
             {
-                using (SqliteConnection connection = new SqliteConnection(db_connection))
+                using (var connection = new SqliteConnection(db_connection))
                 {
                     connection.Open();
-                    SqliteCommand add_command = new SqliteCommand(@"
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        using (var command = new SqliteCommand(@"
                     INSERT INTO heals (healer, heal, recipient, dt, ut)
-                        VALUES(@healer,@heal,@rec,datetime(), unixepoch())
-                    ", connection);
-                    add_command.Parameters.AddWithValue("@healer", healer);
-                    add_command.Parameters.AddWithValue("@heal", heal);
-                    add_command.Parameters.AddWithValue("@rec", recipient);
-                    add_command.ExecuteNonQueryAsync();
+                    VALUES(@healer, @heal, @rec, datetime(), unixepoch())
+                ", connection, transaction))
+                        {
+                            command.Parameters.Add("@healer", SqliteType.Integer);
+                            command.Parameters.Add("@heal", SqliteType.Integer);
+                            command.Parameters.Add("@rec", SqliteType.Integer);
+
+                            foreach (var item in batch)
+                            {
+                                command.Parameters["@healer"].Value = item.Healer;
+                                command.Parameters["@heal"].Value = item.HealAmount;
+                                command.Parameters["@rec"].Value = item.Recipient;
+
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
                 }
+                Debug.WriteLine($"[DB] Flushed {batch.Count} heal records to disk.");
             }
-            catch
+            catch (Exception ex)
             {
-                Debug.WriteLine("couldnt send sql command");
+                Debug.WriteLine($"[DB] Failed to flush heal batch: {ex.Message}");
+                foreach (var item in batch)
+                {
+                    _healQueue.Enqueue(item);
+                }
             }
         }
 
