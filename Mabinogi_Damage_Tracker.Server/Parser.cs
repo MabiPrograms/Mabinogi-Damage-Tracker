@@ -37,6 +37,8 @@ namespace Mabinogi_Damage_tracker
 #if DEBUG_FILE
         private static DateTime? _firstPacketTime = null;
         private static Stopwatch _realTimeClock = new Stopwatch();
+        private static bool enable_realtime = true;
+        private static float playbackspeed = 5;
 #endif
 
         private sealed class RecentDamageHit
@@ -210,7 +212,7 @@ namespace Mabinogi_Damage_tracker
                 device.OnPacketArrival += Device_OnPacketArrival;
                 captureFileWriter.Open();
 #if DEBUG_FILE
-                Thread.Sleep(10000);
+                Thread.Sleep(15000);
                 device.Capture();
 #endif
 #if DEBUG_LIVE || RELEASE
@@ -234,21 +236,24 @@ namespace Mabinogi_Damage_tracker
             RawCapture raw = e.GetPacket();
 
 #if DEBUG_FILE
-            var packetTime = e.GetPacket().Timeval.Date;
-
-            if (_firstPacketTime == null)
+            if (enable_realtime == true)
             {
-                _firstPacketTime = packetTime;
-                _realTimeClock.Start();
-            }
-            else
-            {
-                TimeSpan expectedTimePassed = packetTime - _firstPacketTime.Value;
-                TimeSpan timeToWait = expectedTimePassed - _realTimeClock.Elapsed;
+                var packetTime = e.GetPacket().Timeval.Date;
 
-                if (timeToWait > TimeSpan.Zero)
+                if (_firstPacketTime == null)
                 {
-                    Thread.Sleep(timeToWait);
+                    _firstPacketTime = packetTime;
+                    _realTimeClock.Start();
+                }
+                else
+                {
+                    TimeSpan expectedTimePassed = (packetTime - _firstPacketTime.Value)/playbackspeed;
+                    TimeSpan timeToWait = expectedTimePassed - _realTimeClock.Elapsed;
+
+                    if (timeToWait > TimeSpan.Zero)
+                    {
+                        Thread.Sleep(timeToWait);
+                    }
                 }
             }
 #endif
