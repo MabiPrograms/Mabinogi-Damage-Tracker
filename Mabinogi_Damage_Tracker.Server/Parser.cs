@@ -1,18 +1,21 @@
 ﻿using Mabinogi_Damage_Tracker;
+using Microsoft.Extensions.Options;
 using PacketDotNet;
-using SharpPcap.LibPcap;
 using SharpPcap;
+using SharpPcap.LibPcap;
+using SQLitePCL;
+using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Text;
-using System;
-using SQLitePCL;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Mabinogi_Damage_tracker
 {
@@ -109,6 +112,10 @@ namespace Mabinogi_Damage_tracker
 
         public static bool Stop()
         {
+            if (device == null)
+            {
+                return true;
+            }
             device.Close();
             device.StopCapture();
             device.OnPacketArrival -= Device_OnPacketArrival;
@@ -198,6 +205,7 @@ namespace Mabinogi_Damage_tracker
                 device.OnPacketArrival += Device_OnPacketArrival;
                 captureFileWriter.Open();
 #if DEBUG_FILE
+                Thread.Sleep(10000);
                 device.Capture();
 #endif
 #if DEBUG_LIVE || RELEASE
@@ -467,15 +475,25 @@ namespace Mabinogi_Damage_tracker
                 {
                     case Op_Codes.healing:
                         pack_healing(packetBytes, consumedBytes, ref healingPacks, (int)subPacketLength, beginningOfPacketCursor);
+                        //Debug.WriteLine(Convert.ToHexString(packetBytes.Slice(beginningOfPacketCursor, (int)subPacketLength)));
                         break;
                     case Op_Codes.ChatMessage:
                         read_chat(packetBytes, consumedBytes, beginningOfPacketCursor);
                         break;
                     case Op_Codes.CombatActionPack:
                         pack_damage(packetBytes, consumedBytes, (int)subPacketLength, beginningOfPacketCursor, streamState);
+                        //Debug.WriteLine(Convert.ToHexString(packetBytes.Slice(beginningOfPacketCursor, (int)subPacketLength)));
                         break;
                     case Op_Codes.Proc:
                         pack_proc(packetBytes, consumedBytes, (int)subPacketLength, beginningOfPacketCursor, streamState);
+                        //Debug.WriteLine(Convert.ToHexString(packetBytes.Slice(beginningOfPacketCursor, (int)subPacketLength)));
+                        break;
+                    case 0x520C:
+                        //Debug.WriteLine("entity appears");
+                        //Debug.WriteLine(Convert.ToHexString( packetBytes.Slice(beginningOfPacketCursor, (int)subPacketLength)));
+                        break;
+                    default:
+                        //Debug.WriteLine(opcode);
                         break;
                 }
 
@@ -549,7 +567,7 @@ namespace Mabinogi_Damage_tracker
             {
 #if DEBUG_FILE
                 Random rand = new Random();
-                Thread.Sleep(rand.Next(55));
+                //Thread.Sleep(rand.Next(55));
 #endif
 
                 UInt64 sub_packet_id = BinaryPrimitives.ReadUInt64BigEndian(payloadData.Slice(cursor));
@@ -576,6 +594,7 @@ namespace Mabinogi_Damage_tracker
                 UInt32 actionpack_id = BinaryPrimitives.ReadUInt32BigEndian(payloadData.Slice(cursor));
                 cursor += sizeof(UInt32);
                 _ = actionpack_id;
+                Debug.WriteLine(actionpack_id);
 
                 cursor++;
                 UInt32 prev_actionpack_id = BinaryPrimitives.ReadUInt32BigEndian(payloadData.Slice(cursor));
@@ -620,7 +639,11 @@ namespace Mabinogi_Damage_tracker
                 SkillId skill = 0;
                 SkillId subskill = 0;
                 streamState.LastActionpackId = actionpack_id;
+                UInt32 combatActionID = 0;
                 string throwawaypacket = "";
+                
+
+                var damages = new List<(UInt64 EnemyId, double Damage, double Wound, UInt32 ManaDamage, UInt32 Options, UInt64 attacker_id)>();
 
                 for (int i = 0; i < subsub_packet_count; i++)
                 {
@@ -631,9 +654,10 @@ namespace Mabinogi_Damage_tracker
                     cursor += 22;
                     cursor++;
 
-                    UInt32 combatActionID = BinaryPrimitives.ReadUInt32BigEndian(payloadData.Slice(cursor));
+                    combatActionID = BinaryPrimitives.ReadUInt32BigEndian(payloadData.Slice(cursor));
                     cursor += sizeof(UInt32);
                     _ = combatActionID;
+                    
 
                     cursor++;
                     UInt64 entityID = BinaryPrimitives.ReadUInt64BigEndian(payloadData.Slice(cursor));
@@ -690,9 +714,19 @@ namespace Mabinogi_Damage_tracker
                         UInt32 manaDamage = BinaryPrimitives.ReadUInt32BigEndian(payloadData.Slice(cursor));
                         cursor += sizeof(UInt32);
 
+
+
                         if ((options & DamageOptionMultiline) != 0)
                         {
                             Debug.WriteLine("multiline found saving packet");
+                        }
+
+                        //check if we have a marrionette dealing damage and find the owner's id
+                        if ((attacker_id == 0 || attacker_id > 0x0010010000000001) && damage > 0 && cursor + 50 <= subsub_pack_start_cursor + subsubPackLen)
+                        {
+                            cursor += 42;
+                            attacker_id = BinaryPrimitives.ReadUInt64BigEndian(payloadData.Slice(cursor));
+                            //Debug.WriteLine("Marrionette Attacker ID: {0}", marrionette_attacker_id);
                         }
 
                         if (attacker_id < 0x0010000000000001 || attacker_id > 0x0010010000000001)
@@ -700,24 +734,62 @@ namespace Mabinogi_Damage_tracker
 
                         if (damage < 0 || damage > 100000000 || skillid == 601 || skillid == 512 || skillid == 590) { break; }
 
-                        LogsController.WriteLog(string.Format("[DAMAGE] Attacker: {0} -> Enemy: {1} for {2}", attacker_id, enemy_id, damage));
-                        Debug.WriteLine("Damage {0}, Wound {1}, mana Damage {2}, Attacker {3} {4} -> Enemy {5}, with {6} : {7}", damage.ToString("0.0"), wound.ToString("0.0"), manaDamage, attacker_id, "", enemy_id, skill, subskill);
-                        db_helper.add_damage((Int64)attacker_id, damage, wound, (int)manaDamage, (Int64)enemy_id, (int)skill, (int)subskill, (long)actionpack_id, (long)combatActionID, (long)options);
-                        cache_recent_damage_hit(streamState, actionpack_id, combatActionID, attacker_id, enemy_id, damage, wound, manaDamage, options, skill, subskill);
+                        damages.Add((enemy_id, damage, wound, manaDamage, options, attacker_id));
                     }
                     cursor = subsub_pack_start_cursor + (int)subsubPackLen;
                 }
+
+                foreach (var damage in damages)
+                {
+                    Debug.WriteLine("Damage {0}, Wound {1}, mana Damage {2}, Attacker {3} {4} -> Enemy {5}, with {6} : {7}",
+                        damage.Damage.ToString("0.0"),
+                        damage.Wound.ToString("0.0"),
+                        damage.ManaDamage,
+                        damage.attacker_id,
+                        "",
+                        damage.EnemyId,
+                        skill,
+                        subskill);
+                    LogsController.WriteLog(string.Format("[DAMAGE] Attacker: {0} -> Enemy: {1} for {2}",
+                        damage.attacker_id,
+                        damage.EnemyId,
+                        damage.Damage));
+                    db_helper.add_damage(
+                        (Int64)damage.attacker_id,
+                        damage.Damage,
+                        damage.Wound,
+                        (int)damage.ManaDamage,
+                        (Int64)damage.EnemyId,
+                        (int)skill, (int)subskill,
+                        (long)actionpack_id,
+                        (long)combatActionID,
+                        (long)damage.Options);
+                    cache_recent_damage_hit(
+                        streamState,
+                        actionpack_id,
+                        combatActionID,
+                        damage.attacker_id,
+                        damage.EnemyId,
+                        damage.Damage,
+                        damage.Wound,
+                        damage.ManaDamage,
+                        damage.Options,
+                        skill,
+                        subskill);
+                    ////Debug.WriteLine(combatActionID);
+                }
+
             }
             catch (ArgumentOutOfRangeException)
             {
-                Debug.WriteLine("Cursor out of range, saving this packet and the next. cursor at {0}, packet length {1}, sub packet length {2}, sub sub packet length {3}", cursor, payloadData.Length, sub_packet_length, subsubPackLen);
+                //Debug.WriteLine("Cursor out of range, saving this packet and the next. cursor at {0}, packet length {1}, sub packet length {2}, sub sub packet length {3}", cursor, payloadData.Length, sub_packet_length, subsubPackLen);
                 cursor = sub_packet_length + begining_of_packet_cursor;
                 savenextpacket = true;
             }
             catch (Exception ex)
             {
                 cursor = sub_packet_length + begining_of_packet_cursor;
-                Debug.WriteLine("caught an execption after finding a damage packet: ex {0}", ex.ToString());
+                //Debug.WriteLine("caught an execption after finding a damage packet: ex {0}", ex.ToString());
             }
         }
 
@@ -736,12 +808,14 @@ namespace Mabinogi_Damage_tracker
                 UInt16 procSkillId = BinaryPrimitives.ReadUInt16BigEndian(procPayload.Slice(procPayload.Length - sizeof(UInt16)));
 
                 Debug.WriteLine("[PROC] observed target {0}, skill {1}, actionpack {2}", targetEntityId, procSkillId, streamState.LastActionpackId);
-                //LogsController.WriteLog(string.Format("[PROC] Observed target {0}, skill {1}, actionpack {2}", targetEntityId, procSkillId, streamState.LastActionpackId));
+                LogsController.WriteLog(string.Format("[PROC] Observed target {0}, skill {1}, actionpack {2}", targetEntityId, procSkillId, streamState.LastActionpackId));
 
                 if (!ProcSkillData.TryGetMultiplier(procSkillId, out double multiplier))
                 {
                     return;
                 }
+
+                //double multiplier = 1;
 
                 UInt32 parentActionpackId = streamState.LastActionpackId;
                 if (parentActionpackId == 0)
