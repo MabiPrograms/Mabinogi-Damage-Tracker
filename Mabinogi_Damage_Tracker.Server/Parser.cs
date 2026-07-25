@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -204,6 +205,7 @@ namespace Mabinogi_Damage_tracker
                 device.OnPacketArrival += Device_OnPacketArrival;
                 captureFileWriter.Open();
 #if DEBUG_FILE
+                Thread.Sleep(10000);
                 device.Capture();
 #endif
 #if DEBUG_LIVE || RELEASE
@@ -565,7 +567,7 @@ namespace Mabinogi_Damage_tracker
             {
 #if DEBUG_FILE
                 Random rand = new Random();
-                Thread.Sleep(rand.Next(55));
+                //Thread.Sleep(rand.Next(55));
 #endif
 
                 UInt64 sub_packet_id = BinaryPrimitives.ReadUInt64BigEndian(payloadData.Slice(cursor));
