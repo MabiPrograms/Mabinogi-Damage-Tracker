@@ -180,6 +180,18 @@ namespace Mabinogi_Damage_tracker.Controllers
             return Ok(adapter);
         }
 
+        public IActionResult SaveFlushSettings(int enable, int ms)
+        {
+            db_helper.Set_Flush_Settings(enable, ms);
+            return Ok();
+        }
+
+        public IActionResult GetFlushSettings(int enable, int ms)
+        {
+            
+            return Json(db_helper.Get_Flush_Settings());
+        }
+
         public ActionResult Clear_Damage_DB()
         {
             db_helper.Clear_Damage_DB();
