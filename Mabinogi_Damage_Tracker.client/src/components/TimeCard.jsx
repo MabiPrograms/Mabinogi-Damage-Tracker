@@ -24,26 +24,30 @@ export default function TimeCard({ length_ut, original_length_ut = null, exclude
     const showExcludedSummary = original_length_ut !== null || excluded_length_ut !== null;
 
     return (
-        <Paper square={false} sx={{ padding: '32px', gap: '20px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <AccessTimeIcon fontSize="large" sx={{ marginBottom: '5%' }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ gap: '0px', flexGrow: '1' }}>
-                    <Typography variant="subtitle1">{showExcludedSummary ? t('analytics.analyzedDuration') : t('recordings.recordingLength')}</Typography>
-                    <Typography variant="h3">{formatTimeLength(length_ut)}</Typography>
-                </Box>
-                {showExcludedSummary ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Box>
-                            <Typography variant="subtitle2">{t('analytics.elapsedDuration')}</Typography>
-                            <Typography variant="body1">{formatTimeLength(original_length_ut ?? length_ut)}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="subtitle2">{t('analytics.excludedDuration')}</Typography>
-                            <Typography variant="body1">{formatTimeLength(excluded_length_ut ?? 0)}</Typography>
-                        </Box>
-                    </Box>
-                ) : null}
+        <Paper square={false} sx={{ padding: '16px 24px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <AccessTimeIcon color="action" fontSize="small" />
+                <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {showExcludedSummary ? t('analytics.analyzedDuration') : t('recordings.recordingLength')}
+                </Typography>
             </Box>
+
+            <Box sx={{ display: "flex", flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2 }}>
+                <Typography variant="h4" sx={{ lineHeight: 1 }}>{formatTimeLength(length_ut)}</Typography>
+            </Box>
+
+            {showExcludedSummary ? (
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3, mt: 1.5, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
+                    <Box>
+                        <Typography variant="caption" color="text.secondary">{t('analytics.elapsedDuration')}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>{formatTimeLength(original_length_ut ?? length_ut)}</Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="caption" color="text.secondary">{t('analytics.excludedDuration')}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>{formatTimeLength(excluded_length_ut ?? 0)}</Typography>
+                    </Box>
+                </Box>
+            ) : null}
         </Paper>
     );
 }

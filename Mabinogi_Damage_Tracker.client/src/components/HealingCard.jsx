@@ -25,19 +25,18 @@ function formatLargeNumber(num) {
     return formatted.replace(/\.0(?=[A-Z])/, '');
 }
 
-export default function DamageCard({ totalHealing }) {
-    
-            
+export default function HealingCard({ totalHealing }) {
     return (
-        <Paper square={false} sx={{ padding: "32px", gap: "20px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <LocalHospitalIcon fontSize="large" sx={{ marginBottom: "8%" }} />
-            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 } }}>
-                <Box sx={{ gap: "10px", flexGrow: "2"}}>
-                    <Typography variant="subtitle1">Total Healing</Typography>
-                    <Typography variant="h3">{formatLargeNumber(totalHealing)}</Typography>
-                </Box>
+        <Paper square={false} sx={{ padding: "16px 24px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <LocalHospitalIcon color="action" fontSize="small" />
+                <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Total Healing
+                </Typography>
+            </Box>
+            <Box sx={{ display: "flex", flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2 }}>
+                <Typography variant="h4" sx={{ lineHeight: 1 }}>{formatLargeNumber(totalHealing)}</Typography>
             </Box>
         </Paper>
     );
 }
-

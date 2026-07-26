@@ -29,22 +29,25 @@ function formatLargeNumber(num) {
 
 export default function DamageCard({ chartData, totalDamage, title }) {
     const { t } = useTranslation();
-    
 
     return (
-        <Paper square={false} sx={{ padding: "32px", gap: "20px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <AutoAwesomeIcon fontSize="large" sx={{ marginBottom: "1%" }} />
-            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 } }}>
-                <Box sx={{ gap: "10px", flexGrow: "2"}}>
-                    <Typography variant="subtitle1">{title ?? t('common.totalDamage')}</Typography>
-                    <Typography variant="h3">{formatLargeNumber(totalDamage)}</Typography>
+        <Paper square={false} sx={{ padding: "16px 24px", height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <AutoAwesomeIcon color="action" fontSize="small" />
+                <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {title ?? t('common.totalDamage')}
+                </Typography>
+            </Box>
+            <Box sx={{ display: "flex", flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2 }}>
+                <Typography variant="h4" sx={{ lineHeight: 1 }}>{formatLargeNumber(totalDamage)}</Typography>
+                <Box sx={{ width: 100 }}>
+                    <SparkLineChart
+                        height={35}
+                        width={100}
+                        color="#8684BF"
+                        data={chartData}
+                    />
                 </Box>
-                <SparkLineChart
-                    height={40}
-                    width={150}
-                    color="#8684BF"
-                    data={chartData}
-                />
             </Box>
         </Paper>
     );
