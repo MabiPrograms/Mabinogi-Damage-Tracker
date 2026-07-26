@@ -17,11 +17,11 @@ function Dashboard() {
         () => localStorage.getItem('pollingRate') || 2500
     );
     const [burstCount, setBurstCount] = useState(
-        () => localStorage.getItem('burstCount') || 3
+        () => localStorage.getItem('burstCount') || 8
     );
 
     const [largestDamageInstanceCount, setLargestDamageInstantCount] = useState(
-        () => localStorage.getItem('largestDamageInstanceCount') || 3
+        () => localStorage.getItem('largestDamageInstanceCount') || 8
     );
     const [skillUsageTopN, setSkillUsageTopN] = useState(
         () => Number(localStorage.getItem('skillUsageTopN')) || 10
