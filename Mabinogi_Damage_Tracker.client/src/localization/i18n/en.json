@@ -21,7 +21,8 @@
     "recordings": "Recordings",
     "settings": "Settings",
     "about": "About",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "updateavail":  "Update Avaliable!"
   },
   "settings": {
     "languageLabel": "Language",
