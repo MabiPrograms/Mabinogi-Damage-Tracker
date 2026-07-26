@@ -38,15 +38,24 @@ export default function LargestHitCard({ largestDamageInstances, setGraphLargest
     }, [activeStep, largestDamageInstances, setGraphLargestDamageInstance])
 
     return (
-        <Paper square={false} sx={{ position: 'relative', "padding-left": "32px", "padding-top": "20px", gap: "10px", height: "100%", display: 'flex', flexDirection: 'column' }}>
-            <StarIcon fontSize="medium" sx={{ marginBottom: "8%" }} />
-            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 }}}>
-                <Box sx={{ gap: "10px", flexGrow: "2" }}>
-                    <Typography variant="subtitle1">{t('analytics.largestHitBy', { player: currentlargestDamageInstance.player_name })}</Typography>
-                    <Typography variant="h3">{formatLargeNumber(currentlargestDamageInstance.damage)}</Typography>
-                </Box>
+        <Paper square={false} sx={{ padding: '16px 24px 36px 24px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', position: 'relative' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <StarIcon color="action" fontSize="small" />
+                <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {t('analytics.largestHit', 'Largest Hit')}
+                </Typography>
             </Box>
-            <Box sx={{ position: 'absolute', bottom: 25, left: '50%', transform: "translate(-50%, 50%)" }} >
+
+            <Box sx={{ display: "flex", flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 1 }}>
+                <Typography variant="h4" sx={{ lineHeight: 1, fontWeight: 'normal' }}>
+                    {formatLargeNumber(currentlargestDamageInstance.damage)}
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'normal', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentlargestDamageInstance.player_name}
+                </Typography>
+            </Box>
+
+            <Box sx={{ position: 'absolute', bottom: 4, left: '50%', transform: "translateX(-50%)" }} >
                 <DotsMobileStepper steps={largestDamageInstances.length} activeStep={activeStep} setActiveStep={setActiveStep} />
             </Box>
         </Paper>

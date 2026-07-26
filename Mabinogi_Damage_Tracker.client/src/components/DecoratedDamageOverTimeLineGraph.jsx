@@ -337,7 +337,7 @@ export default function DecoratedDamageOverTimeLineGraph({ chartData, bands, lar
     return (
         <Paper square={false} sx={{ padding: "16px", height: "100%" }}>
             <Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Typography variant="h4" sx={{ marginBottom: "20px" }}>{t('common.damageOverTime')}</Typography>
+                <Typography variant="h4" sx={{ marginBottom: "10px" }}>{t('common.damageOverTime')}</Typography>
                 <GraphSettings
                     labelsVisible={labelsVisible}
                     setLabelsVisible={setLabelsVisible}
@@ -364,7 +364,7 @@ export default function DecoratedDamageOverTimeLineGraph({ chartData, bands, lar
                         width: 50,
                         valueFormatter: formatLargeNumber
                     }]}
-                    margin={{ right: 24 }}
+                    margin={{ right: 24, bottom: 5 }}
                     colors={customColors}
                 >
                     <ChartsLegend />

@@ -27,6 +27,7 @@ function formatLargeNumber(num) {
 
     return formatted.replace(/\.0(?=[A-Z])/, '');
 }
+
 export default function BurstCard({ bands, graphBands, setGraphBands }) {
     const { t } = useTranslation();
     const [activeStep, setActiveStep] = useState(0);
@@ -52,18 +53,25 @@ export default function BurstCard({ bands, graphBands, setGraphBands }) {
     const currentBurst = bands[activeStep];
 
     return (
-        <Paper square={false} sx={{ position: 'relative', "padding-left": "32px","padding-top":"20px", gap: "10px", height: "100%", display: 'flex', flexDirection: 'column'}}>
-            <AutoAwesomeIcon fontSize="medium" />
-            <Box sx={{ display: "flex", flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, sm: 4, md: 8 }}}>
-                <Box sx={{ gap: "5px", flexGrow: "2"}} >
-                    <Typography variant="subtitle1">{t('analytics.largestBurst', { label: currentBurst.label })}</Typography>
-                    <Typography variant="h3">{currentBurst.player_name}</Typography>
-                    <Typography variant="h3">{formatLargeNumber(currentBurst.damage)}</Typography>
-                    <Typography variant="subtitle1">{t('analytics.startedAt', { time: currentBurst.start })}</Typography>
-                </Box>
+        <Paper square={false} sx={{ padding: '16px 24px 36px 24px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', position: 'relative' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <AutoAwesomeIcon color="action" fontSize="small" />
+                <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {t('analytics.largestBurst', { label: currentBurst.label })}
+                </Typography>
             </Box>
-            <Box sx={{ position: 'absolute', bottom: 25 , left: '50%', transform: "translate(-50%, 50%)" }} >
-                <DotsMobileStepper steps={bands.length} activeStep={activeStep} setActiveStep={setActiveStep}/>
+
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 1 }}>
+                <Typography variant="h4" sx={{ lineHeight: 1, fontWeight: 'normal' }}>
+                    {formatLargeNumber(currentBurst.damage)}
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'normal', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentBurst.player_name}
+                </Typography>
+            </Box>
+
+            <Box sx={{ position: 'absolute', bottom: 4, left: '50%', transform: "translateX(-50%)" }} >
+                <DotsMobileStepper steps={bands.length} activeStep={activeStep} setActiveStep={setActiveStep} />
             </Box>
         </Paper>
     );

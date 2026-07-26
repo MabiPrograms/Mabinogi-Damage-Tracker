@@ -540,7 +540,7 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                     </FormControl>
                 </Stack>
             </Paper>
-            <Grid container spacing={{ xs: 1, md: 2 }} alignItems="stretch" sx={{ flexGrow: 1 }}>
+            <Grid container spacing={{ xs: 1, md: 1 }} alignItems="stretch" sx={{ flexGrow: 1 }}>
                 <Grid size={{ xs: 12, sm: 6, lg: 3 }} >
                     {combinedDamageOverTimeData ?
                         <DamageCard chartData={combinedDamageOverTimeData} totalDamage={totalDamage} title={damageCardTitle} />
@@ -569,7 +569,7 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                         <Skeleton variant="rounded" />
                     }
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '250px', paddingBottom: '14px' }}>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                     {largestDamageInstances.length ?
                         <LargestHitCard largestDamageInstances={largestDamageInstances} setGraphLargestDamageInstance={setGraphLargestDamageInstance} />
                         :
@@ -578,7 +578,7 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                 </Grid>
                 {bands.length ?
                     bands.map((band, index) =>
-                        <Grid key={`band_${index}`} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ height: '250px', paddingBottom: '14px' }}>
+                        <Grid key={`band_${index}`} size={{ xs: 12, sm: 6, lg: 3 }}>
                             <BurstCard bands={band} graphBands={graphBands} setGraphBands={setGraphBands} />
                         </Grid>
                     )
@@ -623,6 +623,92 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                         <Skeleton variant="rounded" />
                     }
                 </Grid>
+                
+
+                <Grid size={{ xs: 12, sm: 12, lg: 6, xl: 6 }}>
+                    <Paper square={false} sx={{ p: 2, height: '100%', minHeight: 420, display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="h4" sx={{ mb: 1 }}>{t('analytics.skillHitShare')}</Typography>
+                        <Box sx={{ flex: 1, minHeight: 0 }}>
+                            <SkillUsagePieChart chartData={skillUsageRatioData} />
+                        </Box>
+                    </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 12, lg: 6, xl: 6 }}>
+                    <Paper square={false} sx={{ p: 2, height: '100%', minHeight: 420, display: 'flex', flexDirection: 'column' }}>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                            <Typography variant="h4">{t('analytics.damageBySkill')}</Typography>
+
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                <FormControl size="small" sx={{ minWidth: 220 }}>
+                                    <InputLabel id="skill-player-filter-label">{t('analytics.skillPlayerFilter')}</InputLabel>
+                                    <Select
+                                        labelId="skill-player-filter-label"
+                                        value={selectedSkillPlayerId}
+                                        label={t('analytics.skillPlayerFilter')}
+                                        onChange={(event) => setSelectedSkillPlayerId(event.target.value)}
+                                    >
+                                        <MenuItem value="all">{t('analytics.allPlayers')}</MenuItem>
+                                        {skillPlayerOptions.map((player) => (
+                                            <MenuItem key={player.id} value={player.id}>{`${player.name} (${player.id})`}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+
+                                <FormControl size="small" sx={{ minWidth: 160 }}>
+                                    <InputLabel id="skill-top-n-filter-label">{t('analytics.skillUsageTopN')}</InputLabel>
+                                    <Select
+                                        labelId="skill-top-n-filter-label"
+                                        value={skillUsageTopNLocal}
+                                        label={t('analytics.skillUsageTopN')}
+                                        onChange={(event) => setSkillUsageTopNLocal(Number(event.target.value))}
+                                    >
+                                        {[5, 10, 15, 20, 30].map((value) => (
+                                            <MenuItem key={value} value={value}>{value}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        </Box>
+
+                        <Box sx={{ flex: 1, minHeight: 0 }}>
+                            <DataGrid
+                                rows={paginatedDamageBySkillRows}
+                                columns={damageBySkillColumns}
+                                pageSizeOptions={[5, 10, 20, 30, 60]}
+                                disableColumnResize
+                                disableRowSelectionOnClick
+                                density="compact"
+                                rowHeight={35}
+                                columnHeaderHeight={40}
+                                initialState={{
+                                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
+                                    sorting: {
+                                        sortModel: [{ field: 'totalDamage', sort: 'desc' }],
+                                    },
+                                }}
+                                sx={{
+                                    border: 0,
+                                    backgroundColor: 'transparent',
+                                    fontSize: '1rem',
+                                    '& .MuiDataGrid-cell': {
+                                        fontSize: '1rem'
+                                    },
+                                    '& .MuiDataGrid-columnHeaderTitle': {
+                                        fontSize: '1.05rem',
+                                        fontWeight: 'bold'
+                                    },
+                                    '& .MuiDataGrid-main': { border: 0 },
+                                    '& .MuiDataGrid-columnHeaders': { backgroundColor: 'transparent' },
+                                    '& .MuiDataGrid-footerContainer': { borderTop: 0, minHeight: '40px', mt: -1},
+                                    '& .MuiTablePagination-toolbar': { minHeight: '40px', padding: 0}
+                                }}
+                            />
+                        </Box>
+                    </Paper>
+                </Grid>
+
                 <Grid size={{ xs: 12, sm: 12, lg: 9, xl: 9 }} >
                     {(damageOverTimeData && graphLargestDamageInstance && graphBands.length) ?
                         <DamageScatterPlot series={scatterPlotSeries} />
@@ -691,73 +777,6 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                         </Paper>
                     </Stack>
                 </Grid>
-                <Grid size={{ xs: 12, md: 12 }}>
-                    <Paper sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <FormControl size="small" sx={{ minWidth: 220 }}>
-                            <InputLabel id="skill-player-filter-label">{t('analytics.skillPlayerFilter')}</InputLabel>
-                            <Select
-                                labelId="skill-player-filter-label"
-                                value={selectedSkillPlayerId}
-                                label={t('analytics.skillPlayerFilter')}
-                                onChange={(event) => setSelectedSkillPlayerId(event.target.value)}
-                            >
-                                <MenuItem value="all">{t('analytics.allPlayers')}</MenuItem>
-                                {skillPlayerOptions.map((player) => (
-                                    <MenuItem key={player.id} value={player.id}>{`${player.name} (${player.id})`}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <FormControl size="small" sx={{ minWidth: 160, ml: 2 }}>
-                            <InputLabel id="skill-top-n-filter-label">{t('analytics.skillUsageTopN')}</InputLabel>
-                            <Select
-                                labelId="skill-top-n-filter-label"
-                                value={skillUsageTopNLocal}
-                                label={t('analytics.skillUsageTopN')}
-                                onChange={(event) => setSkillUsageTopNLocal(Number(event.target.value))}
-                            >
-                                {[5, 10, 15, 20, 30].map((value) => (
-                                    <MenuItem key={value} value={value}>{value}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Paper>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 12, lg: 6, xl: 6 }}>
-                    <Paper square={false} sx={{ p: 2, height: '100%', minHeight: 420, display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="h4" sx={{ mb: 1 }}>{t('analytics.skillHitShare')}</Typography>
-                        <Box sx={{ flex: 1, minHeight: 0 }}>
-                            <SkillUsagePieChart chartData={skillUsageRatioData} />
-                        </Box>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 12, lg: 6, xl: 6 }}>
-                    <Paper square={false} sx={{ p: 2, height: '100%', minHeight: 420, display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="h4" sx={{ mb: 1 }}>{t('analytics.damageBySkill')}</Typography>
-                        <Box sx={{ flex: 1, minHeight: 0 }}>
-                            <DataGrid
-                                rows={paginatedDamageBySkillRows}
-                                columns={damageBySkillColumns}
-                                pageSizeOptions={[5, 10, 20, 30, 60]}
-                                disableColumnResize
-                                disableRowSelectionOnClick
-                                initialState={{
-                                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
-                                    sorting: {
-                                        sortModel: [{ field: 'totalDamage', sort: 'desc' }],
-                                    },
-                                }}
-                                sx={{
-                                    border: 0,
-                                    backgroundColor: 'transparent',
-                                    '& .MuiDataGrid-main': { border: 0 },
-                                    '& .MuiDataGrid-columnHeaders': { backgroundColor: 'transparent' },
-                                    '& .MuiDataGrid-footerContainer': { borderTop: 0 },
-                                }}
-                            />
-                        </Box>
-                    </Paper>
-                </Grid>
                 <Grid size={12} >
                     {combinedDamageOverTimeData.length !== 0 ? (
                         <TrimLineGraph chartData={combinedDamageOverTimeData} start_ut={start_ut} end_ut={end_ut} />
@@ -767,6 +786,7 @@ export default function AnalyticsMenu({ start_ut, end_ut }) {
                     }
                 </Grid>
             </Grid>
+
             <Dialog open={Boolean(pendingExcludedInterval)} onClose={() => setPendingExcludedInterval(null)}>
                 <DialogTitle>{t('analytics.addExcludedInterval')}</DialogTitle>
                 <DialogContent>
