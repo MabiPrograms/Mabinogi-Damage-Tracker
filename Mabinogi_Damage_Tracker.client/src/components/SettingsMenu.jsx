@@ -231,7 +231,7 @@ export default function SettingsMenu() {
                     <Typography sx={{ alignSelf: 'flex-start' }} variant='h4'>{t('settings.pollingRate')}</Typography>
                     <Typography sx={{ alignSelf: 'flex-start' }} variant='subtitle'>{t('settings.pollingRateDescription')}</Typography>
                 </Box>
-                <NumberField label="Number Field" min={10} max={10000} units="ms"
+                <NumberField label="Number Field" min={10} max={10000} units="ms" step={100}
                     value={pollingRate}
                     onValueChange={(value) => {
 
