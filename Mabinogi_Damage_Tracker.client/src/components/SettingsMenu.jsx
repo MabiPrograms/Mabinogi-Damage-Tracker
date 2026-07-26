@@ -32,6 +32,9 @@ export default function SettingsMenu() {
     const [severity, setSeverity] = useState("success");
     const [AlertMessage, setAlertMessage] = useState("");
 
+    const [flushEnabled, setFlushEnabled] = useState(null);
+    const [flushMs, setFlushMs] = useState("");
+
     useEffect(() => {
         // Fetch adapter settings
         fetch(`http://${window.location.hostname}:5004/Home/GetCurrentAdapter`)
@@ -41,13 +44,23 @@ export default function SettingsMenu() {
             })
             .catch(error => console.error('Error:', error));
 
-
         fetch(`http://${window.location.hostname}:5004/Home/GetAllAdapters`)
             .then(response => response.json())
             .then(data => {
                 setAdapters(data);
             })
             .catch(error => console.error('Error:', error));
+
+        // Fetch Flush Settings
+        fetch(`http://${window.location.hostname}:5004/Home/GetFlushSettings`)
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    setFlushEnabled(data.enable !== 0);
+                    setFlushMs(data.ms);
+                }
+            })
+            .catch(error => console.error('Error fetching flush settings:', error));
     }, []);
 
     const handleThemeChange = (event) => {
@@ -60,7 +73,6 @@ export default function SettingsMenu() {
         const selectedLanguage = event.target.value;
         i18n.changeLanguage(selectedLanguage);
         localStorage.setItem('lang', selectedLanguage);
-        //console.log(i18n.language);
     };
 
     const handleAdapterChange = async (event) => {
@@ -78,11 +90,41 @@ export default function SettingsMenu() {
         }
     };
 
+    //flush settings
+    const handleFlushEnableChange = async (event) => {
+        const isEnabled = event.target.checked;
+        setFlushEnabled(isEnabled);
+        await saveFlushSettings(isEnabled, flushMs);
+    };
+
+    const handleFlushMsChange = async (value) => {
+        setFlushMs(value);
+        await saveFlushSettings(flushEnabled, value);
+    };
+
+    
+    const saveFlushSettings = async (enabled, ms) => {
+        const enableInt = enabled ? 1 : 0;
+        try {
+            const response = await fetch(`http://${window.location.hostname}:5004/Home/SaveFlushSettings?enable=${enableInt}&ms=${ms}`);
+            setOpen(true);
+            if (response.ok) {
+                setSeverity('success');
+                setAlertMessage("Database Flush Settings Saved.");
+            } else {
+                setSeverity('error');
+                setAlertMessage("Error Saving Flush Settings.");
+            }
+        } catch (error) {
+            console.error("Error saving flush settings", error);
+        }
+    };
+    // ------------------------------------
+
     const handleCloseSnackbar = (event, reason) => {
         if (reason === 'clickaway') {
             return;
         }
-
         setOpen(false);
     };
 
@@ -223,6 +265,44 @@ export default function SettingsMenu() {
                 </FormControl>
             </Box>
             <Divider />
+
+            {/*Database Que and Flush Settings Block*/}
+            {flushEnabled !== null && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box>
+                        <Typography sx={{ alignSelf: 'flex-start' }} variant='h4'> {t('settings.flushsettingstitle')}</Typography>
+                        <Typography sx={{ alignSelf: 'flex-start' }} variant='subtitle2' color="text.secondary">
+                            {t('settings.flushsettingsdescription', { returnObjects: true }).map((line, index, array) => (
+                                <React.Fragment key={index}>
+                                    {line}
+                                    {index < array.length - 1 && <br />}
+                                </React.Fragment>
+                            ))}
+                        </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography>{t('settings.flushsettingenable')}</Typography>
+                        <Switch checked={flushEnabled} onChange={handleFlushEnableChange} />
+                    </Box>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography>{t('settings.flushsettingtime')}</Typography>
+                        <NumberField
+                            label={t('common.delay')}
+                            min={100}
+                            max={60000}
+                            step={100}
+                            units="ms"
+                            value={flushMs}
+                            onValueChange={handleFlushMsChange}
+                        />
+                    </Box>
+                </Box>
+            )}
+            <Divider />
+            {/* ------------------------------------------------ */}
+
             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Box>
                     <Typography sx={{ alignSelf: 'flex-start' }} variant='h4'>{t('settings.restartParse')}</Typography>
@@ -240,8 +320,8 @@ export default function SettingsMenu() {
                             setAlertMessage("Failed to restart adapter.");
                         }
                     }}
-                    >
-                {t('settings.restart')}</Button>
+                >
+                    {t('settings.restart')}</Button>
             </Box>
 
             {/* Feedback component */}

@@ -2,8 +2,10 @@ using Mabinogi_Damage_tracker.Models;
 using Mabinogi_Damage_Tracker;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.Sqlite;
+using SharpPcap;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Xml.Linq;
 
@@ -18,10 +20,34 @@ namespace Mabinogi_Damage_tracker
         public record HealRecord(ulong Healer, ulong Recipient, uint HealAmount, long ut);
         private static readonly ConcurrentQueue<HealRecord> _healQueue = new ConcurrentQueue<HealRecord>();
         private static readonly System.Timers.Timer FlushTimer;
+        private static bool DisableFlush = false;
+        
+        public record FlushSettings(int ms, int enable);
         
         static db_helper()
         {
-            FlushTimer = new System.Timers.Timer(5000);
+            FlushSettings flush = Get_Flush_Settings();
+            if(flush == null) // set default flush settings if non present
+            {
+                using (SqliteConnection connection = new SqliteConnection(db_connection))
+                {
+                    connection.Open();
+                    SqliteCommand sqliteCommand = connection.CreateCommand();
+                    string create_flushsettings = @"
+                    CREATE TABLE IF NOT EXISTS flush_settings(
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        flush_ms INTEGER NOT NULL,
+                        enable INTEGER NOT NULL
+                    )";
+                    sqliteCommand.CommandText = create_flushsettings;
+                    sqliteCommand.ExecuteNonQuery();
+                }
+
+                Set_Flush_Settings(1, 1000);
+                flush = Get_Flush_Settings();
+            }
+           if(flush.enable == 0) { DisableFlush = true; return; }
+            FlushTimer = new System.Timers.Timer(flush.ms);
             FlushTimer.Elapsed += (sender, e) =>
             {
                 FlushDamageQueue();
@@ -29,6 +55,7 @@ namespace Mabinogi_Damage_tracker
             };
             FlushTimer.AutoReset = true;
             FlushTimer.Start();
+
         }
 
 
@@ -87,9 +114,8 @@ namespace Mabinogi_Damage_tracker
                         adapter TEXT
                     )";
 
-                //enable WAL to improve preformance on slow drives
-                //sqliteCommand.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
-                //sqliteCommand.ExecuteNonQuery();
+
+
 
                 sqliteCommand.CommandText = create_playerid;
                 sqliteCommand.ExecuteNonQuery();
@@ -104,6 +130,7 @@ namespace Mabinogi_Damage_tracker
                 sqliteCommand.ExecuteNonQuery();
                 sqliteCommand.CommandText = create_adapter;
                 sqliteCommand.ExecuteNonQuery();
+
             }
         }
 
@@ -193,6 +220,36 @@ namespace Mabinogi_Damage_tracker
 
         public static void add_damage(Int64 playerid, double damage, double wound, int manadamage, Int64 enemyid, int skill, int subskill, long actionpackid, long combatactionid, long options)
         {
+            if(DisableFlush == true)
+            {
+                try
+                {
+                    using (SqliteConnection connection = new SqliteConnection(db_connection))
+                    {
+                        connection.Open();
+                        SqliteCommand add_command = new SqliteCommand(@"
+                    INSERT INTO damages (playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options, dt, ut)
+                        VALUES(@id,@dmg,@wound,@manadamage,@enemyid,@skill,@subskill,@actionpackid,@combatactionid,@options,datetime(), unixepoch())
+                    ", connection);
+                        add_command.Parameters.AddWithValue("@id", playerid);
+                        add_command.Parameters.AddWithValue("@dmg", damage);
+                        add_command.Parameters.AddWithValue("@wound", wound);
+                        add_command.Parameters.AddWithValue("@manadamage", manadamage);
+                        add_command.Parameters.AddWithValue("@enemyid", enemyid);
+                        add_command.Parameters.AddWithValue("@skill", skill);
+                        add_command.Parameters.AddWithValue("@subskill", subskill);
+                        add_command.Parameters.AddWithValue("@actionpackid", actionpackid);
+                        add_command.Parameters.AddWithValue("@combatactionid", combatactionid);
+                        add_command.Parameters.AddWithValue("@options", options);
+                        add_command.ExecuteNonQueryAsync();
+                    }
+                }
+                catch
+                {
+                    Debug.WriteLine("couldnt send sql command");
+                }
+                return; 
+            }
             _damageQueue.Enqueue(new DamageHitRecord(playerid, damage, wound, manadamage, enemyid, skill, subskill, actionpackid, combatactionid, options, DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
         
         }
@@ -342,6 +399,28 @@ namespace Mabinogi_Damage_tracker
 
         public static void add_heal (UInt64 healer, UInt64 recipient, UInt32 heal)
         {
+            if(DisableFlush == true)
+            {
+                try
+                {
+                    using (SqliteConnection connection = new SqliteConnection(db_connection))
+                    {
+                        connection.Open();
+                        SqliteCommand add_command = new SqliteCommand(@"
+                    INSERT INTO heals (healer, heal, recipient, dt, ut)
+                        VALUES(@healer,@heal,@rec,datetime(), unixepoch())
+                    ", connection);
+                        add_command.Parameters.AddWithValue("@healer", healer);
+                        add_command.Parameters.AddWithValue("@heal", heal);
+                        add_command.Parameters.AddWithValue("@rec", recipient);
+                        add_command.ExecuteNonQueryAsync();
+                    }
+                }
+                catch
+                {
+                    Debug.WriteLine("couldnt send sql command");
+                }
+            }
             _healQueue.Enqueue(new HealRecord(healer, recipient, heal, DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
         }
 
@@ -1206,6 +1285,61 @@ namespace Mabinogi_Damage_tracker
             }
         }
 
+        public static void Set_Flush_Settings(int enable, int ms)
+        {
+            try
+            {
+                using (SqliteConnection connection = new SqliteConnection(db_connection))
+                {
+                    connection.Open();
+                    SqliteCommand command = new SqliteCommand(@"
+                        delete from flush_settings;
+                        insert into flush_settings (flush_ms, enable)
+                            values(@ms, @en)
+                    ", connection);
+                    command.Parameters.AddWithValue("@en", enable);
+                    command.Parameters.AddWithValue("@ms", ms);
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch
+            {
+                Debug.WriteLine("could not send sql command");
+            }
+        }
+
+        public static FlushSettings Get_Flush_Settings()
+        {
+            FlushSettings results;
+            try
+            {
+                using (SqliteConnection connection = new SqliteConnection(db_connection))
+                {
+                    connection.Open();
+                    SqliteCommand command = new SqliteCommand(@"
+                    select flush_ms, enable from flush_settings order by id DESC limit 1
+                    ", connection);
+
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+                        results = new FlushSettings(reader.GetInt32(0), reader.GetInt32(1) );
+                    }
+
+                    if (results != null)
+                    { 
+                        return results;
+                    }
+                }
+            }
+            catch
+            {
+                Debug.WriteLine("could not send sql command");
+               
+            }
+            return null;
+        }
 
     }
 }
