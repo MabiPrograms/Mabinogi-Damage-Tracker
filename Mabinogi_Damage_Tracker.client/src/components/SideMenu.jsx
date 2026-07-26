@@ -8,6 +8,7 @@ import MenuContent from './MenuContent';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import { useTranslation } from 'react-i18next';
 
 const drawerWidth = 240;
 
@@ -23,6 +24,7 @@ const Drawer = styled(MuiDrawer)({
 });
 
 export default function SideMenu() {
+    const { t, i18n } = useTranslation();
     //GitHub Update check
     const [updateLink, setUpdateLink] = useState(null);
     const [latestVersion, setLatestVersion] = useState("");
@@ -73,7 +75,7 @@ export default function SideMenu() {
                             severity="info"
                             sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
                         >
-                            Update Available: {latestVersion}
+                            {t('sideMenu.updateavail')} {latestVersion}
                             <Button
                                 variant="outlined"
                                 color="info"
